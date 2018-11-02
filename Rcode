@@ -41,3 +41,39 @@ COL_DESCR <- data.frame(strsplit(MYTABLE$description,', '))
 write.csv(MYTABLEunlist , file="PL020163mytableun.csv")
 
 ##############
+
+library(rvest)
+
+
+#Specifying the url for desired website to be scrapped
+
+SEPPI <- separate(MYTABLE,description, c("Desc.","Type","zone","dist"),sep = ", ", remove = FALSE, )
+
+combo <- cbind2(onice,id2event)
+
+#MYTABLE2 <- separate(MYTABLE,"OnIce",into=c("A","B","C"))
+COL_ID <- data.frame(MYTABLE$id)
+COL_PER <- data.frame(MYTABLE$per)
+COL_STR <- data.frame(MYTABLE$str)
+COL_TIME <- data.frame(MYTABLE$time)
+COL_EVENT <- data.frame(MYTABLE$event)
+
+
+COL_DESCR <- MYTABLE$description %>% str_split_fixed(pattern = ",", n=5) %>% as_tibble()
+
+COL_PER_TIME <- substr(MYTABLE$time,(stri_locate(pattern=":",MYTABLE$time, fixed = TRUE)-10),(stri_locate(pattern=":",MYTABLE$time, fixed = TRUE))+2) %>% as_tibble()
+COL_REM_TIME <- substr(MYTABLE$time,(stri_locate(pattern=":",MYTABLE$time, fixed = TRUE)+3),50) %>% as_tibble()
+
+#Splitting up the columns
+#id2time <- colsplit(PBPcharVector, "\r\n", names=c("id","per","str","time","other"))
+#descrit <- strsplit(MYTABLE$description,', ')
+
+#descritdf <- data.frame(descrit, row.names = "description","Type","Zone","Dist" )
+#colsplit(strsplit(MYTABLE$description,', '), "r\n", names=c("description","Type","Zone","Dist"))
+
+#onice <- colsplit(MYTABLE$OnIce,"\r\n\r\n", names = c("A1","Ap1","A2","Ap2","A3","Ap3","A4","Ap4","A5","Ap5","A6","Ap6","H1","Hp1","H2","Hp2","H3","Hp3","H4","Hp4","H5","Hp5","H6","Hp6"))
+
+#write to csv
+write.csv(MYTABLEunlist , file="PL020163mytableun.csv")
+
+##############

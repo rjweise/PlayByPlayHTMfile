@@ -4,16 +4,16 @@
 require(jsonlite)
 
 #set output folder
-setwd("H:/My Documents/Pers/PuckPossessed/Data")
-
+#setwd("H:/My Documents/Pers/PuckPossessed/Data") # at work
+setwd("/Users/rjweise/Documents/Puckpossessed/raw") # at home
 #looping through all seasons starting in 2007
 gamenumber <- 0
 for(s in 2018:2018) { 
-
-#looping through all games with the selected season  
-    for(i in 1:1300) { #1:1300
-
-#look at the lenght of the game number i and add preceding 0's where needed      
+  
+  #looping through all games with the selected season  
+  for(i in 1:1300) { #1:1300
+    
+    #look at the lenght of the game number i and add preceding 0's where needed      
     g <- nchar(i)
     if(g==1) { 
       nr <- paste0("000", i)
@@ -22,20 +22,20 @@ for(s in 2018:2018) {
     } else if (g==3) {
       nr <- paste0("0", i)
     } else nr <- paste0("", i)
-
-#create the game number based on information from above        
+    
+    #create the game number based on information from above        
     gamenumber <- paste("game", s,"02", nr, sep = "")
-
+    
     gamelinknumber <- paste(s,"02", nr, sep = "")
     gamelink <- paste("http://statsapi.web.nhl.com/api/v1/game/",gamelinknumber,"/feed/live", sep="")
-
-
+    
+    
     #load the data from the NHL API using the jsonlite package  
     tryCatch(assign(gamenumber, fromJSON(gamelink)), error = function(e) print(paste("Game number ", gamenumber, " does not exist.", sep = ""))) #function(e) gamenumber <- paste("E",gamenumber, sep = ""))
     mylist99 <- 0 #make mylist99 empty
-#from the loaded data, add only the relevant columns to a list
+    #from the loaded data, add only the relevant columns to a list
     tryCatch(mylist99 <- get(gamenumber), error = function(e) print(paste("Game number ", gamenumber, " still does not exist.", sep = "")))
-
+    
     # make sure the extracted file contains records    
     TEST1 <- NROW(mylist99) 
     # if the test is passed (1 or more records)
@@ -61,32 +61,32 @@ for(s in 2018:2018) {
                             ,unlist(mylist99[[6]][[1]][[1]][[1]][[3]]) #eventTypeId
                             ,unlist(mylist99[[6]][[1]][[1]][[1]][[4]]) #eventdescription
                             ,unlist(mylist99[[6]][[1]][[1]][[1]][[5]]) #eventsecondary
-                            ,unlist(mylist99[[6]][[1]][[1]][[1]][[6]]) #eventsev
+                            ,unlist(mylist99[[6]][[1]][[1]][[1]][[6]][[1]]) #eventsev
                             ,unlist(mylist99[[6]][[1]][[1]][[1]][[7]]) #eventmin
                             ,unlist(mylist99[[6]][[1]][[1]][[1]][[6]][[2]]) #eventstrength
                             #,tryCatch(unlist(mylist99[[6]][[1]][[1]][[4]][[4]][[1]][[2]]),function(e) 9999) #eventplayers
                             #,unlist(mylist99[[6]][[1]][[1]][[4]][[4]][[2]]) #eventplayertype
                             ,unlist(mylist99[[6]][[1]][[1]][[5]][[2]]) #eventteamname
                             ,unlist(mylist99[[6]][[1]][[1]][[5]][[4]]) #eventteamAbbr
-   
+                            
                  ), error = function(e) print(paste("Issue with ", gamenumber))) 
       
       #add column SourceGame for gamenumber and add gamenumber value (but only if the file existed above, if not than the following code is ignored)
       if (exists("gameslistcsv") == TRUE) {
         gameslistcsv$SourceGame<-gamenumber
-      
+        
         #rename all column headers to more meaningful names
         names(gameslistcsv) <- c("HomeTeam", "AwayTeam", "HomeTeamId", "AwayTeamId", "HomeTeamAbbr", "AwayTeamAbbr"
                                  , "StartDateTime", "Period", "PeriodTime", "PeriodTimeRemain"
                                  , "EventId", "EventIdx", "EventCoordX", "EventCoordY", "Event"
                                  , "EventCode", "EventTypeId", "EventDescription", "EventSecondary", "EventSeverity", "EventMinutes"
                                  ,"eventstrength","eventteamname","eventteamAbbr","SourceGame") 
-      
-      #write to csv
+        
+        #write to csv
         write.csv(gameslistcsv, file = paste("PBP_",gamenumber,".csv",sep = ""), row.names = FALSE) # write the file to csv (without automatically created row names) in the workdirectory
         print(paste(gamenumber, "printed"))
         
-      # remove gameslistcsv dataframe from previous run in loop
+        # remove gameslistcsv dataframe from previous run in loop
         rm(gameslistcsv)}
     }
   }

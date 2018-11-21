@@ -1,0 +1,107 @@
+##
+
+#read the required libraries
+require(jsonlite)
+require(XML)
+library(dplyr)
+
+#set output folder
+#setwd("H:/My Documents/Pers/PuckPossessed/Data") # at work
+setwd("/Users/rjweise/Documents/Puckpossessed/raw/test") # at home
+#looping through all seasons starting in 2007
+gamenumber <- 0
+for(s in 2018:2018) { 
+  
+  #looping through all games with the selected season  
+  for(i in 1:10) { #1:1300
+    
+    #look at the lenght of the game number i and add preceding 0's where needed      
+    g <- nchar(i)
+    if(g==1) { 
+      nr <- paste0("000", i)
+    } else if (g==2) {
+      nr <- paste0("00", i)
+    } else if (g==3) {
+      nr <- paste0("0", i)
+    } else nr <- paste0("", i)
+    
+    #create the game number based on information from above        
+    gamenumber <- paste("game", s,"02", nr, sep = "")
+    
+    gamelinknumber <- paste(s,"02", nr, sep = "")
+    gamelink <- paste("http://statsapi.web.nhl.com/api/v1/game/",gamelinknumber,"/feed/live", sep="")
+    sumlink <- paste("http://www.nhl.com/scores/htmlreports/20182019/GS02",nr,".HTM",sep="")
+    #note the season is still hard coded and needs to be adjusted based on input above
+    
+    #Code to read GAME SUMMARY table
+    #turl = 'http://www.nhl.com/scores/htmlreports/20182019/GS020301.HTM'
+    #temp_table <- readHTMLTable(turl)[[10]]
+    gamesumtable <-readHTMLTable(sumlink)[[10]]
+    
+    
+    #load the data from the NHL API using the jsonlite package  
+    tryCatch(assign(gamenumber, fromJSON(gamelink)), error = function(e) print(paste("Game number ", gamenumber, " does not exist.", sep = ""))) #function(e) gamenumber <- paste("E",gamenumber, sep = ""))
+    mylist99 <- 0 #make mylist99 empty
+    #from the loaded data, add only the relevant columns to a list
+    tryCatch(mylist99 <- get(gamenumber), error = function(e) print(paste("Game number ", gamenumber, " still does not exist.", sep = "")))
+    
+    # make sure the extracted file contains records    
+    TEST1 <- NROW(mylist99) 
+    # if the test is passed (1 or more records)
+    if (TEST1>1) { 
+      #pull only the required fields from the json file
+      tryCatch(gameslistcsv <-
+                 data.frame(unlist(mylist99[[6]][[3]][[1]][[2]][[1]][[2]]) #home team
+                            ,unlist(mylist99[[6]][[3]][[1]][[1]][[1]][[2]]) #away team
+                            ,unlist(mylist99[[6]][[3]][[1]][[2]][[1]][[1]]) #home team id
+                            ,unlist(mylist99[[6]][[3]][[1]][[1]][[1]][[1]]) #away team id                 
+                            ,unlist(mylist99[[6]][[3]][[1]][[2]][[1]][[4]]) #home team abbr
+                            ,unlist(mylist99[[6]][[3]][[1]][[1]][[1]][[4]]) #away team abbr                 
+                            ,unlist(mylist99[[5]][[2]][[1]][[1]]) #StartDateTime 
+                            ,unlist(mylist99[[6]][[1]][[1]][[2]][[3]]) #Period 
+                            ,unlist(mylist99[[6]][[1]][[1]][[2]][[6]]) #Time elapsed (periodTime)
+                            ,unlist(mylist99[[6]][[1]][[1]][[2]][[7]]) #Time remaining (periodTimeRemaining)
+                            ,unlist(mylist99[[6]][[1]][[1]][[2]][[2]]) #eventId
+                            ,unlist(mylist99[[6]][[1]][[1]][[2]][[1]]) #eventIdx
+                            ,unlist(mylist99[[6]][[1]][[1]][[3]][[1]]) #eventcoordinatesX
+                            ,unlist(mylist99[[6]][[1]][[1]][[3]][[2]]) #eventcoordinatesY
+                            ,unlist(mylist99[[6]][[1]][[1]][[1]][[1]]) #event
+                            ,unlist(mylist99[[6]][[1]][[1]][[1]][[2]]) #eventCode
+                            ,unlist(mylist99[[6]][[1]][[1]][[1]][[3]]) #eventTypeId
+                            ,unlist(mylist99[[6]][[1]][[1]][[1]][[4]]) #eventdescription
+                            ,unlist(mylist99[[6]][[1]][[1]][[1]][[5]]) #eventsecondary
+                            ,unlist(mylist99[[6]][[1]][[1]][[1]][[6]][[1]]) #eventsev
+                            ,unlist(mylist99[[6]][[1]][[1]][[1]][[7]]) #eventmin
+                            ,unlist(mylist99[[6]][[1]][[1]][[1]][[8]]) #gamewin?
+                            ,unlist(mylist99[[6]][[1]][[1]][[1]][[9]]) #gamewin?oremptynet?
+                            ,unlist(mylist99[[6]][[1]][[1]][[1]][[10]]) #gamewin?oremptynet?
+                            ,unlist(mylist99[[6]][[1]][[1]][[1]][[6]][[2]]) #eventstrength
+                            #,tryCatch(unlist(mylist99[[6]][[1]][[1]][[4]][[4]][[1]][[2]]),function(e) 9999) #eventplayers
+                            #,unlist(mylist99[[6]][[1]][[1]][[4]][[4]][[2]]) #eventplayertype
+                            ,unlist(mylist99[[6]][[1]][[1]][[5]][[2]]) #eventteamname
+                            ,unlist(mylist99[[6]][[1]][[1]][[5]][[4]]) #eventteamAbbr
+                            
+                 ), error = function(e) print(paste("Issue with ", gamenumber))) 
+      
+      #add column SourceGame for gamenumber and add gamenumber value (but only if the file existed above, if not than the following code is ignored)
+      if (exists("gameslistcsv") == TRUE) {
+        gameslistcsv$SourceGame<-gamenumber
+        
+        #rename all column headers to more meaningful names
+        names(gameslistcsv) <- c("HomeTeam", "AwayTeam", "HomeTeamId", "AwayTeamId", "HomeTeamAbbr", "AwayTeamAbbr"
+                                 , "StartDateTime", "Period", "PeriodTime", "PeriodTimeRemain"
+                                 , "EventId", "EventIdx", "EventCoordX", "EventCoordY", "Event"
+                                 , "EventCode", "EventTypeId", "EventDescription", "EventSecondary", "EventSeverity", "EventMinutes"
+                                 ,"eventstrength","eventteamname","eventteamAbbr","SourceGame") 
+        
+        #write to csv
+        write.csv(gameslistcsv, file = paste("PBP_",gamenumber,".csv",sep = ""), row.names = FALSE) # write the file to csv (without automatically created row names) in the workdirectory
+        print(paste(gamenumber, "printed"))
+        
+        write.csv(gamesumtable, file = paste("GST_",gamenumber,".csv", sep=""), row.names = FALSE)
+        
+        # remove gameslistcsv dataframe from previous run in loop
+        rm(gameslistcsv)}
+    }
+  }
+}

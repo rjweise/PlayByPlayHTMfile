@@ -6,14 +6,14 @@ library(rvest)
 
 #set output folder
 #setwd("H:/My Documents/Pers/PuckPossessed/Data") # at work
-#setwd("/Users/rjweise/Documents/Puckpossessed/raw/test") # at home
-setwd("H:/My Documents/Pers/R/RJworkfolder") # at work
+setwd("/Users/rjweise/Documents/Puckpossessed/raw/PPF") # at home
+#setwd("H:/My Documents/Pers/R/RJworkfolder") # at work
 #looping through all seasons starting in 2007
 gamenumber <- 0
 for(s in 2018:2018) { 
   
   #looping through all games with the selected season  
-  for(i in 1:10) { #1:1300
+  for(i in 1:350) { #1:1300
     
     #look at the lenght of the game number i and add preceding 0's where needed      
     g <- nchar(i)
@@ -116,11 +116,21 @@ for(s in 2018:2018) {
         write.csv(gameslistcsv, file = paste("PBP_",gamenumber,".csv",sep = ""), row.names = FALSE) # write the file to csv (without automatically created row names) in the workdirectory
         print(paste(gamenumber, "printed"))
         
-        write.csv(gamesumtable, file = paste("GST_",gamenumber,".csv", sep=""), row.names = FALSE)
-        
-        write.csv(gamepentable, file = paste("PEN_",gamenumber,".csv", sep=""), row.names = FALSE)
+       
         # remove gameslistcsv dataframe from previous run in loop
         rm(gameslistcsv)}
+      
+      if (exists("gamesumtable") == TRUE) {
+        gamesumtable$SourceGame<-gamenumber
+      
+      write.csv(gamesumtable, file = paste("GST_",gamenumber,".csv", sep=""), row.names = FALSE)
+      }
+      
+      if (exists("gamepentable") == TRUE) {
+        gamepentable$SourceGame<-gamenumber
+      write.csv(gamepentable, file = paste("PEN_",gamenumber,".csv", sep=""), row.names = FALSE)
+      }
+      
     }
   }
 }

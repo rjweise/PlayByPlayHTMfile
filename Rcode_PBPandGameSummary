@@ -3,6 +3,7 @@ require(jsonlite)
 require(XML)
 library(dplyr)
 library(rvest)
+library(stringr)
 
 #set output folder
 #setwd("H:/My Documents/Pers/PuckPossessed/Data") # at work
@@ -13,7 +14,7 @@ gamenumber <- 0
 for(s in 2018:2018) { 
   
   #looping through all games with the selected season  
-  for(i in 1:350) { #1:1300
+  for(i in 134:500) { #1:1300
     
     #look at the lenght of the game number i and add preceding 0's where needed      
     g <- nchar(i)
@@ -90,9 +91,9 @@ for(s in 2018:2018) {
                             ,unlist(mylist99[[6]][[1]][[1]][[1]][[5]]) #eventsecondary
                             ,unlist(mylist99[[6]][[1]][[1]][[1]][[6]][[1]]) #eventsev
                             ,unlist(mylist99[[6]][[1]][[1]][[1]][[7]]) #eventmin
-                            ,unlist(mylist99[[6]][[1]][[1]][[1]][[8]]) #gamewin?
-                            ,unlist(mylist99[[6]][[1]][[1]][[1]][[9]]) #gamewin?oremptynet?
-                            ,unlist(mylist99[[6]][[1]][[1]][[1]][[10]]) #gamewin?oremptynet?
+                            #,unlist(mylist99[[6]][[1]][[1]][[1]][[8]]) #gamewin?
+                            #,unlist(mylist99[[6]][[1]][[1]][[1]][[9]]) #gamewin?oremptynet?
+                            #,unlist(mylist99[[6]][[1]][[1]][[1]][[10]]) #gamewin?oremptynet?
                             ,unlist(mylist99[[6]][[1]][[1]][[1]][[6]][[2]]) #eventstrength
                             #,tryCatch(unlist(mylist99[[6]][[1]][[1]][[4]][[4]][[1]][[2]]),function(e) 9999) #eventplayers
                             #,unlist(mylist99[[6]][[1]][[1]][[4]][[4]][[2]]) #eventplayertype
@@ -128,8 +129,9 @@ for(s in 2018:2018) {
       
       if (exists("gamepentable") == TRUE) {
         gamepentable$SourceGame<-gamenumber
-      write.csv(gamepentable, file = paste("PEN_",gamenumber,".csv", sep=""), row.names = FALSE)
       }
+      gamepentable[,4] <- gsub("[\r\n]",'',gamepentable[,4])
+      write.csv(gamepentable, file = paste("PEN_",gamenumber,".csv", sep=""), row.names = FALSE)
       
     }
   }

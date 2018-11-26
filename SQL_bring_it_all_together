@@ -1,0 +1,197 @@
+-- ALL PBP Penalties in regular time (periods 1, 2 and 3)
+
+CREATE TABLE PBP_201718_201819_g1_g307_Penalties AS
+SELECT 
+	SourceGame
+	,StartDateTime as GameDate
+	,EventIdx
+	,EventId
+	,(Period - 1)*20*60 + SUBSTR(periodtime,1,2) * 60 + SUBSTR(periodtime,4,2) * 1 as EventTimeSec
+	,Event
+	,EventDescription
+	,EventTeamAbbr
+	,Period
+	,PeriodTime
+	,AwayTeam
+	,HomeTeam
+	,rowid
+FROM PBP_2018_G1_G307
+WHERE (event = "Penalty") --and sourcegame ="game2018020301"
+AND Period * 1 < 4
+--Order by SourceGame, EventTimeSec, EventIdx
+
+union
+
+SELECT 
+	SourceGame
+	,StartDateTime as GameDate
+	,EventIdx
+	,EventId
+	,(Period - 1)*20*60 + SUBSTR(periodtime,1,2) * 60 + SUBSTR(periodtime,4,2) * 1 as EventTimeSec
+	,Event
+	,EventDescription
+	,EventTeamAbbr
+	,Period
+	,PeriodTime
+	,AwayTeam
+	,HomeTeam
+	,rowid
+FROM PBP_games_201718_g1_g1271
+WHERE (event = "Penalty") --and sourcegame ="game2018020301"
+AND Period * 1 < 4
+Order by SourceGame, EventTimeSec, EventIdx
+
+---
+
+Create index idx_order_pbp
+ON PBP_201718_201819_g1_g307_Penalties(SourceGame, EventTimeSec, EventIdx)
+
+-- ALL PBP Penalties in regular time (periods 1, 2 and 3)
+CREATE TABLE PEN_201718_201819_g1_g307_Penalties AS
+SELECT
+	SourceGame
+	,period
+	,(Period - 1)*20*60 + SUBSTR(Time,1,LENGTH(Time)-3) * 60  + SUBSTR(Time,LENGTH(Time)-1,2) * 1 as PenTimeSec
+	,Id as GameTeamPenId
+	,PIM * 1 as PIM_min
+	,PIM * 60 as PIM_sec
+	,Player as PenPlayer
+	,Penalty
+	,rowid
+FROM PEN_2018_G1_G307
+WHERE PIM_min != 0 and period  != "OT"--and sourcegame ="game2018020301"
+
+union
+
+SELECT
+	SourceGame
+	,period
+	,(Period - 1)*20*60 + SUBSTR(Time,1,LENGTH(Time)-3) * 60  + SUBSTR(Time,LENGTH(Time)-1,2) * 1 as PenTimeSec
+	,Id as GameTeamPenId
+	,PIM * 1 as PIM_min
+	,PIM * 60 as PIM_sec
+	,Player as PenPlayer
+	,Penalty
+	,rowid
+FROM PEN_games_201718_g1_g1271
+WHERE PIM_min != 0 and period  != "OT"--and sourcegame ="game2018020301"
+ORDER by SourceGame,PenTimeSec, Id
+
+--
+
+CREATE INDEX idx_order_pen
+ON PEN_201718_201819_g1_g307_Penalties(SourceGame, PenTimeSec, GameTeamPenId)
+
+--
+
+Now do some Google Sheets Magic (basically adding a counter of events / penalties respectively per game, since both data sources are ordered the same
+
+--- Create a table by joining the two tables together
+
+CREATE TABLE PBP_LJ_PEN_Penalties_201718_201819g1g307 AS
+SELECT * FROM PBP_Penalties_201718_201819g1g307 PBPpen
+LEFT JOIN PEN_Penalties_201718_201819g1g307 PENpen ON ( PBPpen.SourceGame=PENpen.SourceGame AND PBPpen.GameEventId=PENpen.GamePenId)
+
+
+-- Now let's do the same for the goals
+
+-- ALL PBP Goals in regular time (periods 1, 2 and 3)
+
+CREATE TABLE PBP_201718_201819_g1_g307_Goals AS
+SELECT 
+	SourceGame
+	,StartDateTime as GameDate
+	,EventIdx
+	,EventId
+	,(Period - 1)*20*60 + SUBSTR(periodtime,1,2) * 60 + SUBSTR(periodtime,4,2) * 1 as EventTimeSec
+	,Event
+	,EventDescription
+	,EventTeamAbbr
+	,Period
+	,PeriodTime
+	,AwayTeam
+	,HomeTeam
+	,EventCoordX
+	,EventCoordY
+	,rowid
+FROM PBP_2018_G1_G307
+WHERE (event = "Goal") --and sourcegame ="game2018020301"
+AND Period * 1 < 4
+--Order by SourceGame, EventTimeSec, EventIdx
+
+union
+
+SELECT 
+	SourceGame
+	,StartDateTime as GameDate
+	,EventIdx
+	,EventId
+	,(Period - 1)*20*60 + SUBSTR(periodtime,1,2) * 60 + SUBSTR(periodtime,4,2) * 1 as EventTimeSec
+	,Event
+	,EventDescription
+	,EventTeamAbbr
+	,Period
+	,PeriodTime
+	,AwayTeam
+	,HomeTeam
+	,EventCoordX
+	,EventCoordY
+	,rowid
+FROM PBP_games_201718_g1_g1271
+WHERE (event = "Goal") --and sourcegame ="game2018020301"
+AND Period * 1 < 4
+Order by SourceGame, EventTimeSec, EventIdx
+
+-- ALL GST Goals in regular time (periods 1, 2 and 3)
+CREATE TABLE GST_201718_201819_g1_g307_Goals AS
+SELECT
+	SourceGame
+	,per as Period
+	,(Per - 1)*20*60 + SUBSTR(Time,1,LENGTH(Time)-3) * 60  + SUBSTR(Time,LENGTH(Time)-1,2) * 1 as GoalTimeSec
+	,Team
+	,MTLonice AS AwayOnIce
+	,TORonice AS HomeOnIce 
+	,Str AS Strength
+	,G AS Goallnr
+	,rowid
+FROM GST_2018_G1_G307
+--WHERE per != "Per" OR per  != "OT"--and sourcegame ="game2018020301"
+WHERE per = "1" OR per = "2" OR per = "3"
+
+union
+
+SELECT
+	SourceGame
+	,per as Period
+	,(Per - 1)*20*60 + SUBSTR(Time,1,LENGTH(Time)-3) * 60  + SUBSTR(Time,LENGTH(Time)-1,2) * 1 as GoalTimeSec
+	,Team
+	,TORonice AS AwayOnIce
+	,WPGonice AS HomeOnIce 
+	,Str AS Strength
+	,G AS Goallnr
+	,rowid
+FROM GST_games_201718_g1_g1271
+--WHERE per != "Per" OR per  != "OT"--and sourcegame ="game2018020301"
+WHERE per = "1" OR per = "2" OR per = "3"
+ORDER by SourceGame,GoalTimeSec, G
+
+--
+No need for Google Sheet magic here
+
+--- Create a table by joining the two tables together
+
+CREATE TABLE PBP_LJ_GST_Goals_201718_201819g1g307 AS
+SELECT * FROM PBP_201718_201819_g1_g307_Goals PBPgoal
+LEFT JOIN GST_201718_201819_g1_g307_Goals GSTgoal ON ( PBPgoal.SourceGame=GSTgoal.SourceGame AND PBPgoal.EventTimeSec=GSTgoal.GoaltimeSec)
+
+---
+
+--Lastly we need to combine the penaly events ith the goal events
+
+CREATE TABLE PBP_201718_201819_g1_g307_GoalsPenalties
+AS
+Select * FROM PBP_LJ_PEN_Penalties_201718_201819g1g307
+union
+SElect * FROM PBP_LJ_GST_Goals_201718_201819g1g307
+
+
